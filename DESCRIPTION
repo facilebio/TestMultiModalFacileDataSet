@@ -1,0 +1,38 @@
+Package: TestMultiModalFacileDataSet
+Type: Package
+Title: Provides the pieces to generate a multi-modal FacileDataSet.
+Version: 0.0.1
+Authors@R: c(
+    person(
+      "Steve", "Lianoglou",
+      email = "slianoglou@gmail.com", 
+      role = c("aut", "cre"), 
+      comment = c(ORCID = "0000-0002-0924-1754")))
+Description: This assembles individual DGELists that are assembled into a
+    multi-modal FacileDataSet. This will then be used as the source data to
+    test dataset creation, as well as the dataset used inside the FacileData
+    package for unit testing its functionality. The source data is the public
+    scRNAseq and snRNAseq available from the KPMP project.
+URL:
+    https://github.com/facilebio/TestMultiModalFacileDataSet,
+    https://cellxgene.cziscience.com/collections/bcb61471-2a44-4d00-a0af-ff085512674c
+BugReports: https://github.com/facilebio/TestMultiModalFacileDataSet/issues
+Depends:
+    R (>= 4.2.0)
+Imports:
+    checkmate,
+    dplyr,
+    edgeR,
+    tidyr
+Suggests:
+    ggplot2,
+    FacileData
+    rmarkdown,
+    testthat,
+    withr
+Remotes:
+    facilebio/FacileData
+License: Apache License (>= 2.0)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
