@@ -43,6 +43,7 @@ cxg.fn <- "~/tmp/local.rds"
 ```
 
 ```{r, message=FALSE, warning=FALSE}
+devtools::load_all(".")
 library(Seurat)
 library(dplyr)
 library(tidyr)
@@ -51,7 +52,9 @@ theme_set(theme_bw(base_size = 14))
 ```
 
 ```{r}
-x.all <- readRDS(cxg.fn)
+if (!exists("x.all")) {
+  x.all <- readRDS(cxg.fn)
+}
 x.all$sample_id <- paste(
   as.character(x.all$subclass.l1),
   sub("-", "_", as.character(x.all$donor_id)),
@@ -68,8 +71,8 @@ some distribution of "conditions"
 
 ```{r}
 condition.count <- x.all@meta.data |> 
-  count(donor_id, condition.l2) |>
-  arrange(donor_id, condition.l2)
+  dplyr::count(donor_id, condition.l2) |>
+  dplyr::arrange(donor_id, condition.l2)
 ```
 
 Each donor is onnly assigned one condition:
@@ -94,7 +97,7 @@ assay.tally <- x.all@meta.data |>
     ceiling = min(1000, count),
     .by = c("donor_id", "condition.l2", "suspension_type", "subclass.l1")) |> 
   as_tibble() |> 
-  rename(cell_type = subclass.l1)
+  dplyr::rename(cell_type = subclass.l1)
 ```
 
 The `x.all$suspension_type` column (`"cell"` or `"nucleus"`) indicates the
@@ -376,3 +379,37 @@ ggplot(data.distro, aes(x = ncells, y = donor_id, fill = assay_type)) +
   geom_col(position = position_dodge()) +
   facet_wrap(~ cell_abbrev)
 ```
+The FacileDataSet has a concept of groups of samples belonging to different
+`"dataset"`(s). When it was original built -- for the TCGA -- this mapped to
+"indication" -- somehow in my mind that was a useful construct.
+
+When we use a FacileDataSet to group samples by "experiments" that were run
+in house, "dataset" can "naturally" map to individual experiment identifiers,
+or when amassing a GEO dataset, they can line up with "GSE" identifiers.
+
+In the dataset we have here, we don't have a natural breakdown. There is a
+concept of "site" in the KPMP, which would work, but I don't have that
+annotation. Just to exercise the data creation, query, and retrieval, we'll
+use the `"cond"`-ition column to split the samples.
+
+Lastly, we will filter out by dataset genes that have 0 counts through all the
+samples. This will create a ragged set over the "featurespace" of these
+samples, which we will be forced to handle.
+
+```{r, message=FALSE, warning=FALSE}
+y.nuc <- pb_split(pb.nuc, "cond")
+y.cell <- pb_split(pb.cells, "cond")
+```
+
+And that's a wrap
+
+## Save Assay Lists
+
+```{r}
+fn.nuc <- assay_list_file_path("snRNAseq")
+qs::qsave(y.nuc, fn.nuc)
+
+fn.cell <- assay_list_file_path("scRNAseq")
+qs::qsave(y.cell, fn.cell)
+```
+
