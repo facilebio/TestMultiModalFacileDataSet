@@ -5,7 +5,6 @@ output: github_document
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 ```{r, echo = FALSE}
-devtools::load_all(".")
 knitr::opts_chunk$set(
   collapse = TRUE,
   echo = TRUE,

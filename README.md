@@ -1,8 +1,6 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-    ## ℹ Loading TestMultiModalFacileDataSet
-
 # TestMultiModalFacileDataSet
 
 This package provides well-groomed DGELists to build a sparse/ragged
