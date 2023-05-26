@@ -16,19 +16,28 @@ pb_split <- function(x, split.by = "cond") {
   reqpkg("SingleCellExperiment")
   split.levels <- x[[split.by]]
   stopifnot(is.character(split.levels) || is.factor(split.levels))
+  
+  # The current FacileDataSet constraints is that the list of datasets that
+  # is used to "hydrate" each assay must all have **the same** feature space.
+  y.all <- edgeR::DGEList(
+    counts = SingleCellExperiment::counts(x),
+    genes = as.data.frame(SummarizedExperiment::rowData(x)),
+    # group was already defined in sce.all
+    # group = paste0(pbx$cond, "__", pbx$cell_abbrev)
+    samples = as.data.frame(SingleCellExperiment::colData(x)))
+  
+  # Force counts to be `integer`
+  storage.mode(y.all$counts) <- "integer"
+
+  y.all <- edgeR::calcNormFactors(y.all)
+  
+  des <- model.matrix(~ group, y.all$samples)
+  keep <- edgeR::filterByExpr(y.all, design = des, min.count = 5, 
+                              min.total.count = 10)
+  y <- edgeR::calcNormFactors(y.all[keep,,keep.lib.sizes = FALSE])
+
   sapply(unique(split.levels), function(dsname) {
-    pbx <- x[, split.levels == dsname]
-    y <- edgeR::DGEList(
-      counts = SingleCellExperiment::counts(pbx),
-      genes = as.data.frame(SummarizedExperiment::rowData(pbx)),
-      # group was already defined in sce.all
-      # group = paste0(pbx$cond, "__", pbx$cell_abbrev)
-      samples = as.data.frame(SingleCellExperiment::colData(pbx)))
-    y <- edgeR::calcNormFactors(y)
-    des <- model.matrix(~ group, y$samples)
-    keep <- edgeR::filterByExpr(y, design = des, min.count = 5, 
-                                min.total.count = 10)
-    edgeR::calcNormFactors(y[keep,,keep.lib.sizes = FALSE])
+    edgeR::calcNormFactors(y[, split.levels == dsname])
   }, simplify = FALSE)
 }
 
@@ -37,9 +46,9 @@ pb_split <- function(x, split.by = "cond") {
 #' @return a tibble of assay information
 available_assays <- function() {
   dplyr::tribble(
-    ~assay_name, ~assay_type, ~feature_type, ~storage_mode,
-    "scRNAseq",  "pseudobulk", "ensgid",     "integer",
-    "snRNAseq",  "pseudobulk", "ensgid",     "integer")
+    ~assay_name, ~assay_type, ~feature_type, ~storage_mode, ~description,
+    "scRNAseq",  "pseudobulk", "ensgid",     "integer",     "pseudobulked scRNAseq data",
+    "snRNAseq",  "pseudobulk", "ensgid",     "integer",     "pseudobulked snRNAseq data")
 }
 
 #' Returns the filepath for the raw assay data for a given assay(name)
